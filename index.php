@@ -1,86 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <style>
-        .wrapper{
-            width: 600px;
-            margin: 0 auto;
-        }
-        table tr td:last-child{
-            width: 120px;
-        }
-    </style>
-    <script>
-        $(document).ready(function(){
-            $('[data-toggle="tooltip"]').tooltip();   
-        });
-    </script>
-</head>
-<body>
-    <div class="wrapper">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="mt-5 mb-3 clearfix">
-                        <h2 class="pull-left">Employees Details</h2>
-                        <a href="create.php" class="btn btn-success pull-right"><i class="fa fa-plus"></i> Add New Employee</a>
-                    </div>
-                    <?php
-                    // Include config file
-                    require_once "config.php";
-                    
-                    // Attempt select query execution
-                    $sql = "SELECT * FROM employees";
-                    if($result = mysqli_query($link, $sql)){
-                        if(mysqli_num_rows($result) > 0){
-                            echo '<table class="table table-bordered table-striped">';
-                                echo "<thead>";
-                                    echo "<tr>";
-                                        echo "<th>#</th>";
-                                        echo "<th>Name</th>";
-                                        echo "<th>Address</th>";
-                                        echo "<th>Salary</th>";
-                                        echo "<th>Action</th>";
-                                    echo "</tr>";
-                                echo "</thead>";
-                                echo "<tbody>";
-                                while($row = mysqli_fetch_array($result)){
-                                    echo "<tr>";
-                                        echo "<td>" . $row['id'] . "</td>";
-                                        echo "<td>" . $row['name'] . "</td>";
-                                        echo "<td>" . $row['address'] . "</td>";
-                                        echo "<td>" . $row['salary'] . "</td>";
-                                        echo "<td>";
-                                            echo '<a href="read.php?id='. $row['id'] .'" class="mr-3" title="View Record" data-toggle="tooltip"><span class="fa fa-eye"></span></a>';
-                                            echo '<a href="update.php?id='. $row['id'] .'" class="mr-3" title="Update Record" data-toggle="tooltip"><span class="fa fa-pencil"></span></a>';
-                                            echo '<a href="delete.php?id='. $row['id'] .'" title="Delete Record" data-toggle="tooltip"><span class="fa fa-trash"></span></a>';
-                                        echo "</td>";
-                                    echo "</tr>";
-                                }
-                                echo "</tbody>";                            
-                            echo "</table>";
-                            // Free result set
-                            mysqli_free_result($result);
-                        } else{
-                            echo '<div class="alert alert-danger"><em>No records were found.</em></div>';
-                        }
-                    } else{
-                        echo "Oops! Something went wrong. Please try again later.";
-                    }
- 
-                    // Close connection
-                    mysqli_close($link);
-                    ?>
-                </div>
-            </div>        
-        </div>
-    </div>
+<?php include 'includes/session.php'; ?>
+<?php include 'includes/header.php'; ?>
+<body class="hold-transition skin-blue layout-top-nav">
+<div class="wrapper">
+
+	<?php include 'includes/navbar.php'; ?>
+	 
+	  <div class="content-wrapper">
+	    <div class="container">
+
+	      <!-- Main content -->
+	      <section class="content">
+	        <div class="row">
+	        	<div class="col-sm-9">
+	        		<?php
+	        			if(isset($_SESSION['error'])){
+	        				echo "
+	        					<div class='alert alert-danger'>
+	        						".$_SESSION['error']."
+	        					</div>
+	        				";
+	        				unset($_SESSION['error']);
+	        			}
+	        		?>
+	        		<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+		                <ol class="carousel-indicators">
+		                  <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+		                  <li data-target="#carousel-example-generic" data-slide-to="1" class=""></li>
+		                  <li data-target="#carousel-example-generic" data-slide-to="2" class=""></li>
+		                </ol>
+		                <div class="carousel-inner">
+		                  <div class="item active">
+		                    <img src="images/banner1.png" alt="First slide">
+		                  </div>
+		                  <div class="item">
+		                    <img src="images/banner2.png" alt="Second slide">
+		                  </div>
+		                  <div class="item">
+		                    <img src="images/banner3.png" alt="Third slide">
+		                  </div>
+		                </div>
+		                <a class="left carousel-control" href="#carousel-example-generic" data-slide="prev">
+		                  <span class="fa fa-angle-left"></span>
+		                </a>
+		                <a class="right carousel-control" href="#carousel-example-generic" data-slide="next">
+		                  <span class="fa fa-angle-right"></span>
+		                </a>
+		            </div>
+		            <h2>Monthly Top Sellers</h2>
+		       		<?php
+		       			$month = date('m');
+		       			$conn = $pdo->open();
+
+		       			try{
+		       			 	$inc = 3;	
+						    $stmt = $conn->prepare("SELECT *, SUM(quantity) AS total_qty FROM details LEFT JOIN sales ON sales.id=details.sales_id LEFT JOIN products ON products.id=details.product_id WHERE MONTH(sales_date) = '$month' GROUP BY details.product_id ORDER BY total_qty DESC LIMIT 6");
+						    $stmt->execute();
+						    foreach ($stmt as $row) {
+						    	$image = (!empty($row['photo'])) ? 'images/'.$row['photo'] : 'images/noimage.jpg';
+						    	$inc = ($inc == 3) ? 1 : $inc + 1;
+	       						if($inc == 1) echo "<div class='row'>";
+	       						echo "
+	       							<div class='col-sm-4'>
+	       								<div class='box box-solid'>
+		       								<div class='box-body prod-body'>
+		       									<img src='".$image."' width='100%' height='230px' class='thumbnail'>
+		       									<h5><a href='product.php?product=".$row['slug']."'>".$row['name']."</a></h5>
+		       								</div>
+		       								<div class='box-footer'>
+		       									<b>&#36; ".number_format($row['price'], 2)."</b>
+		       								</div>
+	       								</div>
+	       							</div>
+	       						";
+	       						if($inc == 3) echo "</div>";
+						    }
+						    if($inc == 1) echo "<div class='col-sm-4'></div><div class='col-sm-4'></div></div>"; 
+							if($inc == 2) echo "<div class='col-sm-4'></div></div>";
+						}
+						catch(PDOException $e){
+							echo "There is some problem in connection: " . $e->getMessage();
+						}
+
+						$pdo->close();
+
+		       		?> 
+	        	</div>
+	        	<div class="col-sm-3">
+	        		<?php include 'includes/sidebar.php'; ?>
+	        	</div>
+	        </div>
+	      </section>
+	     
+	    </div>
+	  </div>
+  
+  	<?php include 'includes/footer.php'; ?>
+</div>
+
+<?php include 'includes/scripts.php'; ?>
 </body>
 </html>
